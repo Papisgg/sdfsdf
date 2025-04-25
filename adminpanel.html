@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel Login</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin_panel">
+    <div class="login_form_cont" id="loginForm">
+        <img class="admin_panel_img" src="img/admin_panel_img.svg" alt="">
+        <h1 class="admin_panel_title">Вход в админ-панель</h1>
+        <form  onsubmit="return validateLogin(event)">
+            <input class="admin_panel_input" type="text" id="username" name="username" required placeholder="Логин">
+            <input class="admin_panel_input" type="password" id="password" name="password" required placeholder="Пароль">
+            <input class="admin_panel_input admin_submit" type="submit" value="Войти">
+        </form>
+    </div>
+    <div id="data" style="display:none;"></div>
+
+    <script>
+        function validateLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            if (username === "Skillkrays" && password === "Egor200544") {
+                document.getElementById("loginForm").style.display = "none";
+                fetchData();
+            } else {
+                alert("Incorrect username or password!");
+            }
+        }
+
+        function fetchData() {
+            fetch('data.php')
+                .then(response => response.json())
+                .then(data => {
+                    let output = "<form id='commentForm'> <div class='admin_form_img_cont'> <img class='admin_form_img' src='img/admin_from_img.svg' alt=''> </div> <div class='subtitle_cont'> <h1 class='admin_subtitle'>Комментарий</h1> <h1 class='admin_subtitle'>Сумма</h1> </div>";
+                    let hasValidItem = false; // Переменная для отслеживания наличия валидного элемента
+
+                    data.forEach(item => {
+                        // Проверка на null или пустые значения
+                        if (item.comment !== null && item.comment.trim() !== "" && 
+                            item.amount !== null && item.amount.trim() !== "") {
+                            output += `
+                            <div class='admin_cont'>
+                                <input class="admin_input" name="comment" value="${item.comment}"> 
+                                <input class="admin_input" name="summa" value="${item.amount} btc">
+                                <button class="admin_button" type="submit">Подтвердить</button>
+                            </div>`;
+                            hasValidItem = true; // Если нашли валидный элемент, меняем значение
+                        }
+                    });
+
+                    output += "</form>";
+
+                    // Добавляем форму на страницу только если есть валидные элементы
+                    if (hasValidItem) {
+                        document.getElementById("data").innerHTML = output;
+                        document.getElementById("data").style.display = "block";
+                    }
+
+                    // Добавляем обработчик события для формы, если валидный элемент добавлен
+                    if (hasValidItem) {
+                        $('#commentForm').on('submit', function(e) {
+                            e.preventDefault(); // Останавливаем стандартное поведение формы
+
+                            const comment = $(this).find('input[name="comment"]').val();
+                            const amount = $(this).find('input[name="summa"]').val();
+
+                            // Проверка на пустые значения
+                            if (!comment || comment.trim() === "" || !amount || amount.trim() === "") {
+                                alert("Comment and amount cannot be empty!");
+                                return; // Выход из функции, если одно из полей пустое
+                            }
+
+                            $.ajax({
+                                url: 'confirm.php', // замените на ваш PHP файл
+                                type: 'POST',
+                                data: $(this).serialize(),
+                                success: function(response) {
+                                    $('#response').html(response); // Показываем ответ от PHP
+                                },
+                                error: function() {
+                                    ('#response').html('Произошла ошибка.');
+                                }
+                            });
+                        });
+                    }
+                });
+        }
+    </script>
+</body>
+</html>
